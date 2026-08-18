@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #fdfaf4;
+  --color-ink: #1f1b16;
+  --color-muted: #7a6f62;
+  --color-line: #e7ddcd;
+  --color-card: #ffffff;
+  --color-accent: #b4471f;
+  --color-accent-soft: #f6e7df;
+
+  --font-display: ui-serif, Georgia, "Times New Roman", serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-paper: #17140f;
+    --color-ink: #f3ece1;
+    --color-muted: #a2978a;
+    --color-line: #332c22;
+    --color-card: #1f1a14;
+    --color-accent: #e8825a;
+    --color-accent-soft: #35251d;
+  }
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Inputs share one look across the whole app. */
+.field {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line);
+  background-color: var(--color-card);
+  color: var(--color-ink);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.field:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 0.35rem;
+}

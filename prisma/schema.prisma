@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+// Connection URLs live in prisma.config.ts (Prisma 7); the app itself
+// connects through the pg driver adapter in lib/db.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  apiToken     String   @unique
+  createdAt    DateTime @default(now())
+
+  recipes Recipe[]
+  ratings Rating[]
+}
+
+model Recipe {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  /// [{ amount, unit, item }]
+  ingredients Json
+  /// string[]
+  steps       Json
+  servings    Int?
+  prepMinutes Int?
+  cookMinutes Int?
+  tags        String[] @default([])
+  imageUrl    String?
+  sourceName  String?
+  sourceUrl   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authorId String
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  ratings  Rating[]
+
+  @@index([createdAt])
+  @@index([tags])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  /// 1-5, or null when the recipe is only flagged as a favourite.
+  stars     Int?
+  favorite  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  userId   String
+  recipeId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+}
