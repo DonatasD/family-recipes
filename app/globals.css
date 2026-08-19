@@ -1,33 +1,46 @@
 @import "tailwindcss";
 
+/* One bright palette, no dark override: the kitchen is sunny even when the
+   OS isn't. */
 @theme {
-  --color-paper: #fdfaf4;
-  --color-ink: #1f1b16;
-  --color-muted: #7a6f62;
-  --color-line: #e7ddcd;
-  --color-card: #ffffff;
-  --color-accent: #b4471f;
-  --color-accent-soft: #f6e7df;
+  --color-paper: #f6f4e6;
+  --color-ink: #333518;
+  --color-muted: #81845c;
+  --color-line: #e4e1c2;
+  --color-card: #fdfcf2;
+  --color-accent: #66761a;
+  --color-accent-soft: #e9edc9;
 
-  --font-display: ui-serif, Georgia, "Times New Roman", serif;
-}
+  /* Fallback stacks matter: next/font vars are absent in error pages. */
+  --font-display: var(--font-baloo), ui-rounded, "Comic Sans MS", ui-serif,
+    Georgia, serif;
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-paper: #17140f;
-    --color-ink: #f3ece1;
-    --color-muted: #a2978a;
-    --color-line: #332c22;
-    --color-card: #1f1a14;
-    --color-accent: #e8825a;
-    --color-accent-soft: #35251d;
-  }
+  /* Olive-grove bunting: olive, mustard, terracotta, sage. */
+  --stripe: linear-gradient(
+    90deg,
+    #66761a 0%,
+    #66761a 25%,
+    #e3b62e 25%,
+    #e3b62e 50%,
+    #cf6b3f 50%,
+    #cf6b3f 75%,
+    #a9b665 75%,
+    #a9b665 100%
+  );
 }
 
 body {
   background-color: var(--color-paper);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: "";
+  display: block;
+  height: 5px;
+  background: var(--stripe);
 }
 
 /* Inputs share one look across the whole app. */
@@ -44,6 +57,125 @@ body {
 .field:focus {
   outline: 2px solid var(--color-accent);
   outline-offset: -1px;
+}
+
+/* Garden scene: the top fade blends the sky into the page paper. */
+.scene-fade {
+  mask-image: linear-gradient(to top, black 80%, transparent);
+}
+
+.scene-cloud {
+  animation: scene-drift 46s ease-in-out infinite alternate;
+}
+
+.scene-cloud-slow {
+  animation: scene-drift 70s ease-in-out infinite alternate-reverse;
+}
+
+.scene-butterfly {
+  animation: scene-flutter 7s ease-in-out infinite;
+}
+
+@keyframes scene-drift {
+  from {
+    transform: translateX(-30px);
+  }
+  to {
+    transform: translateX(30px);
+  }
+}
+
+@keyframes scene-flutter {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  30% {
+    transform: translate(-14px, -10px);
+  }
+  60% {
+    transform: translate(10px, -16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-cloud,
+  .scene-cloud-slow,
+  .scene-butterfly {
+    animation: none;
+  }
+}
+
+/* Footer cat doodles. transform-box makes the SVG groups rotate around
+   their own base instead of the viewport origin. */
+.doodle-tail,
+.doodle-tail-flick,
+.doodle-blink {
+  transform-box: fill-box;
+}
+
+.doodle-tail {
+  animation: doodle-tail-sway 4s ease-in-out infinite;
+}
+
+.doodle-tail-flick {
+  animation: doodle-tail-sway 6s ease-in-out infinite reverse;
+}
+
+.doodle-blink {
+  animation: doodle-blink 5s infinite;
+}
+
+.doodle-heart {
+  animation: doodle-heart 7s ease-in-out infinite;
+  opacity: 0;
+}
+
+@keyframes doodle-tail-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(14deg);
+  }
+}
+
+@keyframes doodle-blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  94% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes doodle-heart {
+  0%,
+  55%,
+  100% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  70%,
+  85% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doodle-tail,
+  .doodle-tail-flick,
+  .doodle-blink,
+  .doodle-heart {
+    animation: none;
+  }
+  .doodle-heart {
+    opacity: 1;
+  }
 }
 
 .label {

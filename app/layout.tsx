@@ -1,9 +1,23 @@
 import type { Metadata } from "next";
+import { Baloo_2, Nunito } from "next/font/google";
 import Link from "next/link";
 
 import { getSessionUser } from "@/lib/auth";
+import CatDoodles from "@/components/CatDoodles";
+import GardenScene from "@/components/GardenScene";
 import SignOutButton from "@/components/SignOutButton";
 import "./globals.css";
+
+// latin-ext keeps Lithuanian titles (Šaltibarščiai, Ugnė) in the same face.
+const baloo = Baloo_2({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-baloo",
+});
+
+const nunito = Nunito({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-nunito",
+});
 
 export const metadata: Metadata = {
   title: "Don & Ugnė's Recipes",
@@ -16,8 +30,8 @@ export default async function RootLayout({
   const user = await getSessionUser();
 
   return (
-    <html lang="en">
-      <body className="min-h-screen antialiased">
+    <html lang="en" className={`${baloo.variable} ${nunito.variable}`}>
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         <header className="border-b border-line">
           <div className="mx-auto flex max-w-5xl items-center gap-4 px-5 py-4">
             <Link
@@ -42,11 +56,16 @@ export default async function RootLayout({
           </div>
         </header>
 
-        <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">
+          {children}
+        </main>
 
-        <footer className="mx-auto max-w-5xl px-5 pb-10 pt-4 text-xs text-muted">
-          Made for two people who cook.
+        <footer className="mx-auto flex w-full max-w-5xl items-end justify-between gap-4 px-5 pb-4 pt-4 text-xs text-muted">
+          <span>Made for two people who cook — and two cats who supervise.</span>
+          <CatDoodles className="h-14 w-auto shrink-0" />
         </footer>
+
+        <GardenScene />
       </body>
     </html>
   );
