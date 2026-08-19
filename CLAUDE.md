@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A private two-person recipe collection ("Don & Ugnė's Recipes"): Next.js 16 App Router + React 19, Prisma/PostgreSQL, Tailwind v4, Vercel Blob for photos. Every route requires a signed-in user — there is no public/anonymous view.
 
+**The repository itself is public.** Never commit secrets, private keys, connection strings with real credentials, API tokens, or other private data — they belong in `.env` (gitignored); `.env.example` holds placeholders only.
+
 ## Commands
 
 ```bash
