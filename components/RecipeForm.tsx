@@ -5,21 +5,29 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { MEASUREMENT_UNITS } from "@/lib/measurements";
 import type { Ingredient, SerializedRecipe } from "@/lib/recipes";
 
 type Props = { recipe?: SerializedRecipe };
 
-type Row = { amount: string; unit: string; item: string };
+type Row = { amount: string; unit: string; customUnit: boolean; item: string };
 
-const emptyRow: Row = { amount: "", unit: "", item: "" };
+const emptyRow: Row = { amount: "", unit: "", customUnit: false, item: "" };
+
+const isKnownUnit = (unit: string) =>
+  (MEASUREMENT_UNITS as readonly string[]).includes(unit);
 
 function toRows(ingredients: Ingredient[]): Row[] {
   if (ingredients.length === 0) return [{ ...emptyRow }];
-  return ingredients.map((ingredient) => ({
-    amount: ingredient.amount ?? "",
-    unit: ingredient.unit ?? "",
-    item: ingredient.item,
-  }));
+  return ingredients.map((ingredient) => {
+    const unit = ingredient.unit ?? "";
+    return {
+      amount: ingredient.amount ?? "",
+      unit,
+      customUnit: unit !== "" && !isKnownUnit(unit),
+      item: ingredient.item,
+    };
+  });
 }
 
 export default function RecipeForm({ recipe }: Props) {
@@ -179,7 +187,7 @@ export default function RecipeForm({ recipe }: Props) {
           </div>
           <div>
             <label className="label" htmlFor="prep">
-              Prep (min)
+              Prep (min, optional)
             </label>
             <input
               id="prep"
@@ -191,7 +199,7 @@ export default function RecipeForm({ recipe }: Props) {
           </div>
           <div>
             <label className="label" htmlFor="cook">
-              Cook (min)
+              Cook (min, optional)
             </label>
             <input
               id="cook"
@@ -234,19 +242,46 @@ export default function RecipeForm({ recipe }: Props) {
                 )
               }
             />
-            <input
+            <select
               className="field w-24"
-              placeholder="ml"
               aria-label="Unit"
-              value={row.unit}
-              onChange={(event) =>
+              value={row.customUnit ? "custom" : row.unit}
+              onChange={(event) => {
+                const value = event.target.value;
                 setIngredients((rows) =>
                   rows.map((r, i) =>
-                    i === index ? { ...r, unit: event.target.value } : r
+                    i === index
+                      ? value === "custom"
+                        ? { ...r, unit: "", customUnit: true }
+                        : { ...r, unit: value, customUnit: false }
+                      : r
                   )
-                )
-              }
-            />
+                );
+              }}
+            >
+              <option value="">no unit</option>
+              {MEASUREMENT_UNITS.map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit}
+                </option>
+              ))}
+              <option value="custom">custom…</option>
+            </select>
+            {row.customUnit && (
+              <input
+                className="field w-24"
+                placeholder="handful"
+                aria-label="Custom unit"
+                value={row.unit}
+                onChange={(event) =>
+                  setIngredients((rows) =>
+                    rows.map((r, i) =>
+                      i === index ? { ...r, unit: event.target.value } : r
+                    )
+                  )
+                }
+              />
+            )}
             <input
               className="field flex-1"
               placeholder="kefir"
