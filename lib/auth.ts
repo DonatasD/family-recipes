@@ -45,10 +45,8 @@ function tokensMatch(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
-async function userFromBearer(request: Request): Promise<AuthUser | null> {
-  const token = extractBearer(request);
-  if (!token) return null;
-
+/** Resolves a personal API token to its owner. Shared by REST and MCP auth. */
+export async function getUserByApiToken(token: string): Promise<AuthUser | null> {
   const user = await prisma.user.findUnique({
     where: { apiToken: token },
     select: { ...USER_FIELDS, apiToken: true },
@@ -56,6 +54,12 @@ async function userFromBearer(request: Request): Promise<AuthUser | null> {
   if (!user || !tokensMatch(user.apiToken, token)) return null;
 
   return { id: user.id, email: user.email, name: user.name };
+}
+
+async function userFromBearer(request: Request): Promise<AuthUser | null> {
+  const token = extractBearer(request);
+  if (!token) return null;
+  return getUserByApiToken(token);
 }
 
 /** The signed-in user for a browser request, or null. */

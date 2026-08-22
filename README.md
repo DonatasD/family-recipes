@@ -141,6 +141,44 @@ Vercel caps serverless request bodies at 4.5 MB, so this endpoint rejects
 anything over 4 MB. The website is not affected — it uploads straight to Blob
 storage and handles phone-sized photos.
 
+## MCP
+
+The site is also a [Model Context Protocol](https://modelcontextprotocol.io)
+server at `/api/mcp` (Streamable HTTP), so an agent can search, add, and edit
+recipes with the same personal API token the REST API uses:
+
+```json
+{
+  "mcpServers": {
+    "recipes": {
+      "url": "https://your-site.vercel.app/api/mcp",
+      "headers": { "Authorization": "Bearer rcp_…" }
+    }
+  }
+}
+```
+
+Clients that only speak stdio can bridge with
+[`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
+
+```json
+{
+  "mcpServers": {
+    "recipes": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote", "https://your-site.vercel.app/api/mcp",
+        "--header", "Authorization: Bearer rcp_…"
+      ]
+    }
+  }
+}
+```
+
+Tools: `list_recipes`, `get_recipe`, `create_recipe`, `update_recipe`,
+`delete_recipe`. There is no OAuth flow — only the bearer token — so clients
+that insist on OAuth for remote servers can't connect yet.
+
 ## Scripts
 
 | Command | Does |
@@ -166,6 +204,7 @@ lib/
   auth.ts                     bearer token + session resolution
   session.ts                  JWT cookie signing
   recipes.ts                  Zod schemas, slugs, serializer
+  mcp.ts                      MCP server tools (served at api/mcp)
   db.ts                       Prisma client
 prisma/schema.prisma          data model
 scripts/create-user.ts        account creation
