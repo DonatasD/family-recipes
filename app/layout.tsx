@@ -46,6 +46,9 @@ export default async function RootLayout({
                 <Link href="/recipes/new" className="hover:text-accent">
                   Add recipe
                 </Link>
+                <Link href="/grocery" className="hover:text-accent">
+                  Grocery list
+                </Link>
                 <Link href="/settings" className="hover:text-accent">
                   Settings
                 </Link>

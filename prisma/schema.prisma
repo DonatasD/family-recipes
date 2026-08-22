@@ -44,9 +44,37 @@ model Recipe {
   authorId String
   author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   ratings  Rating[]
+  grocery  GroceryRecipe?
 
   @@index([createdAt])
   @@index([tags])
+}
+
+// The grocery list is shared between the two accounts on purpose — either
+// person plans, either person shops — so neither model carries a userId.
+
+model GroceryRecipe {
+  id       String   @id @default(cuid())
+  /// Shopping for this many servings; null means "as the recipe is written".
+  servings Int?
+  /// number[] — indexes into the recipe's ingredients already picked up.
+  checked  Json     @default("[]")
+  addedAt  DateTime @default(now())
+
+  recipeId String @unique
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+/// A one-off item that doesn't come from any recipe (shaving kit, dish soap).
+model GroceryItem {
+  id       String   @id @default(cuid())
+  amount   String?
+  unit     String?
+  item     String
+  /// Category id from lib/grocery.ts; null means "guess from the name".
+  category String?
+  checked  Boolean  @default(false)
+  addedAt  DateTime @default(now())
 }
 
 model Rating {
