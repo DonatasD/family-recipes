@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import {
   formatAmount,
@@ -185,6 +185,12 @@ export default function GroceryList({
   const [view, setView] = useState<View>("recipe");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Web Share API support, read hydration-safely (the server render says no).
+  const canShare = useSyncExternalStore(
+    () => () => {},
+    () => typeof navigator.share === "function",
+    () => false
+  );
   const [form, setForm] = useState({
     amount: "",
     unit: "pcs",
@@ -270,42 +276,52 @@ export default function GroceryList({
     }
   }
 
-  async function copy() {
+  /**
+   * Plain lines, one item per line and no tick markers, because note apps
+   * (Google Keep, Samsung Notes) turn exactly that into a checklist — any
+   * "[ ]" prefix survives as clutter. Items already picked up are left out;
+   * the export exists to take shopping, not to archive the ticks.
+   */
+  function exportText(): string {
     const lines: string[] = [];
-    const mark = (done: boolean) => (done ? "[x] " : "[ ] ");
+    const line = (amount: string, item: string) =>
+      [amount, item].filter(Boolean).join(" ");
     if (view === "recipe") {
       for (const entry of list.recipes) {
+        const pending = occurrences.filter(
+          (o) => o.recipeSlug === entry.slug && !o.checked
+        );
+        if (pending.length === 0) continue;
         lines.push(entry.title.toUpperCase());
-        for (const o of occurrences.filter((o) => o.recipeSlug === entry.slug)) {
-          lines.push(mark(o.checked) + [amountLabel(o), o.item].filter(Boolean).join(" "));
-        }
+        for (const o of pending) lines.push(line(amountLabel(o), o.item));
         lines.push("");
       }
-      const extras = occurrences.filter((o) => o.itemId);
+      const extras = occurrences.filter((o) => o.itemId && !o.checked);
       if (extras.length > 0) {
         lines.push("EXTRA ITEMS");
-        for (const o of extras) {
-          lines.push(mark(o.checked) + [amountLabel(o), o.item].filter(Boolean).join(" "));
-        }
+        for (const o of extras) lines.push(line(amountLabel(o), o.item));
       }
     } else if (view === "all") {
       for (const row of [...mergedAll].sort((a, b) => a.item.localeCompare(b.item))) {
-        lines.push(mark(row.done) + [row.amountText, row.item].filter(Boolean).join(" "));
+        if (row.done) continue;
+        lines.push(line(row.amountText, row.item));
       }
     } else {
       for (const category of GROCERY_CATEGORIES) {
         const rows = mergedAll
-          .filter((row) => row.category === category.id)
+          .filter((row) => row.category === category.id && !row.done)
           .sort((a, b) => a.item.localeCompare(b.item));
         if (rows.length === 0) continue;
         lines.push(category.name.toUpperCase());
-        for (const row of rows) {
-          lines.push(mark(row.done) + [row.amountText, row.item].filter(Boolean).join(" "));
-        }
+        for (const row of rows) lines.push(line(row.amountText, row.item));
         lines.push("");
       }
     }
-    const text = lines.join("\n").trim();
+    return lines.join("\n").trim();
+  }
+
+  async function copy() {
+    const text = exportText();
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
@@ -313,6 +329,19 @@ export default function GroceryList({
       setTimeout(() => setCopied(false), 1800);
     } catch {
       setError("The browser blocked clipboard access.");
+    }
+  }
+
+  async function share() {
+    const text = exportText();
+    if (!text) return;
+    try {
+      await navigator.share({ title: "Grocery list", text });
+    } catch (err) {
+      // Backing out of the share sheet raises AbortError; that's not a failure.
+      if ((err as DOMException | null)?.name !== "AbortError") {
+        setError("Sharing didn't work here — Copy list still does.");
+      }
     }
   }
 
@@ -336,7 +365,10 @@ export default function GroceryList({
       </div>
 
       {error && (
-        <p className="rounded-lg border border-line bg-accent-soft px-4 py-2 text-sm text-accent">
+        <p
+          role="alert"
+          className="rounded-lg border border-line bg-accent-soft px-4 py-2 text-sm text-accent"
+        >
           {error}
         </p>
       )}
@@ -383,7 +415,7 @@ export default function GroceryList({
                           <span className="inline-flex items-center rounded-lg border border-line bg-paper">
                             <button
                               type="button"
-                              aria-label="Fewer servings"
+                              aria-label={`Fewer servings of ${recipe.title}`}
                               className="px-2 py-1 text-sm hover:text-accent"
                               onClick={() =>
                                 servings > 1 &&
@@ -401,7 +433,7 @@ export default function GroceryList({
                             </span>
                             <button
                               type="button"
-                              aria-label="More servings"
+                              aria-label={`More servings of ${recipe.title}`}
                               className="px-2 py-1 text-sm hover:text-accent"
                               onClick={() =>
                                 void apply(
@@ -417,6 +449,7 @@ export default function GroceryList({
                         )}
                         <button
                           type="button"
+                          aria-label={`Remove ${recipe.title} from the list`}
                           className="ml-auto text-xs text-muted hover:text-accent"
                           onClick={() =>
                             void apply(
@@ -430,6 +463,7 @@ export default function GroceryList({
                     ) : (
                       <button
                         type="button"
+                        aria-label={`Add ${recipe.title} to the list`}
                         className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
                         onClick={() =>
                           void apply(
@@ -522,6 +556,7 @@ export default function GroceryList({
               <button
                 key={id}
                 type="button"
+                aria-pressed={view === id}
                 onClick={() => setView(id)}
                 className={`rounded-full px-3 py-1 text-xs ${
                   view === id
@@ -534,9 +569,21 @@ export default function GroceryList({
             ))}
           </div>
           <div className="ml-auto flex gap-3 text-xs">
+            {canShare && (
+              <button
+                type="button"
+                onClick={() => void share()}
+                className="text-muted hover:text-accent"
+              >
+                Share
+              </button>
+            )}
             <button type="button" onClick={() => void copy()} className="text-muted hover:text-accent">
               {copied ? "Copied ✓" : "Copy list"}
             </button>
+            <span role="status" className="sr-only">
+              {copied ? "List copied to clipboard" : ""}
+            </span>
             <button
               type="button"
               onClick={() => void apply(request("/api/grocery", "PATCH", { checked: false }))}

@@ -32,6 +32,12 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${baloo.variable} ${nunito.variable}`}>
       <body className="flex min-h-screen flex-col font-sans antialiased">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+        >
+          Skip to content
+        </a>
         <header className="border-b border-line">
           <div className="mx-auto flex max-w-5xl items-center gap-4 px-5 py-4">
             <Link
@@ -59,7 +65,7 @@ export default async function RootLayout({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">
+        <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">
           {children}
         </main>
 

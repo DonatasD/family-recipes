@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function DeleteRecipeButton({
   slug,
@@ -13,6 +13,17 @@ export default function DeleteRecipeButton({
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Each step unmounts the button that was just pressed, which would drop
+  // keyboard focus to <body>; hand it to the next sensible button instead.
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  const wasConfirming = useRef(false);
+  useEffect(() => {
+    if (confirming) confirmRef.current?.focus();
+    else if (wasConfirming.current) triggerRef.current?.focus();
+    wasConfirming.current = confirming;
+  }, [confirming]);
 
   async function remove() {
     setBusy(true);
@@ -30,6 +41,7 @@ export default function DeleteRecipeButton({
   if (!confirming) {
     return (
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setConfirming(true)}
         className="text-muted hover:text-accent"
@@ -43,7 +55,9 @@ export default function DeleteRecipeButton({
     <span className="flex items-center gap-3">
       <span className="text-muted">Delete “{title}”?</span>
       <button
+        ref={confirmRef}
         type="button"
+        aria-label={`Yes, delete “${title}”`}
         onClick={remove}
         disabled={busy}
         className="rounded-lg bg-accent px-3 py-1 text-white disabled:opacity-50"

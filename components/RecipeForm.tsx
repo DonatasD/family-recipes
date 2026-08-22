@@ -372,13 +372,18 @@ export default function RecipeForm({ recipe }: Props) {
           <input
             type="file"
             accept="image/*"
+            aria-label="Recipe photo"
             className="text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-accent"
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) handlePhoto(file);
             }}
           />
-          {uploading && <span className="text-sm text-muted">Uploading…</span>}
+          {uploading && (
+            <span role="status" className="text-sm text-muted">
+              Uploading…
+            </span>
+          )}
           {imageUrl && !uploading && (
             <button
               type="button"
@@ -436,7 +441,10 @@ export default function RecipeForm({ recipe }: Props) {
       </section>
 
       {error && (
-        <p className="rounded-lg border border-accent bg-accent-soft px-4 py-3 text-sm text-accent">
+        <p
+          role="alert"
+          className="rounded-lg border border-accent bg-accent-soft px-4 py-3 text-sm text-accent"
+        >
           {error}
         </p>
       )}

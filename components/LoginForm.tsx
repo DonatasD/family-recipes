@@ -64,7 +64,11 @@ export default function LoginForm({ next }: { next: string }) {
         />
       </div>
 
-      {error && <p className="text-sm text-accent">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-accent">
+          {error}
+        </p>
+      )}
 
       <button
         type="submit"

@@ -33,12 +33,13 @@ export default function RatingControl({
 
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1" role="group" aria-label="Rate this recipe">
         {[1, 2, 3, 4, 5].map((value) => (
           <button
             key={value}
             type="button"
-            aria-label={`${value} star${value > 1 ? "s" : ""}`}
+            aria-label={`Rate ${value} star${value > 1 ? "s" : ""}`}
+            aria-pressed={stars !== null && value <= stars}
             onClick={() => {
               setStars(value);
               save({ stars: value });
@@ -56,6 +57,7 @@ export default function RatingControl({
 
       <button
         type="button"
+        aria-pressed={favorite}
         onClick={() => {
           const next = !favorite;
           setFavorite(next);
@@ -70,7 +72,11 @@ export default function RatingControl({
         {favorite ? "♥ A keeper" : "♡ Mark as keeper"}
       </button>
 
-      {error && <span className="text-sm text-accent">{error}</span>}
+      {error && (
+        <span role="alert" className="text-sm text-accent">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

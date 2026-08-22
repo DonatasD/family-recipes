@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ApiTokenPanel({
   initialToken,
@@ -12,6 +12,17 @@ export default function ApiTokenPanel({
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [confirming, setConfirming] = useState(false);
+
+  // Each step unmounts the button that was just pressed, which would drop
+  // keyboard focus to <body>; hand it to the next sensible button instead.
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  const wasConfirming = useRef(false);
+  useEffect(() => {
+    if (confirming) confirmRef.current?.focus();
+    else if (wasConfirming.current) triggerRef.current?.focus();
+    wasConfirming.current = confirming;
+  }, [confirming]);
 
   async function regenerate() {
     setRegenerating(true);
@@ -45,6 +56,7 @@ export default function ApiTokenPanel({
         </code>
         <button
           type="button"
+          aria-pressed={visible}
           onClick={() => setVisible((value) => !value)}
           className="rounded-lg border border-line px-3 py-2 text-sm hover:border-accent hover:text-accent"
         >
@@ -57,15 +69,20 @@ export default function ApiTokenPanel({
         >
           {copied ? "Copied" : "Copy"}
         </button>
+        <span role="status" className="sr-only">
+          {copied ? "Token copied to clipboard" : ""}
+        </span>
       </div>
 
       {confirming ? (
         <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-muted">
+          <span id="regenerate-warning" className="text-muted">
             Regenerating stops the old token working anywhere you&rsquo;ve used it.
           </span>
           <button
+            ref={confirmRef}
             type="button"
+            aria-describedby="regenerate-warning"
             onClick={regenerate}
             disabled={regenerating}
             className="rounded-lg bg-accent px-3 py-1.5 text-white disabled:opacity-50"
@@ -82,6 +99,7 @@ export default function ApiTokenPanel({
         </div>
       ) : (
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setConfirming(true)}
           className="text-sm text-muted hover:text-accent"

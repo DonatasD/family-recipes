@@ -1,11 +1,27 @@
 @import "tailwindcss";
 
+/* Tailwind v4 dropped the pointer cursor on buttons; put it back everywhere,
+   keeping the default cursor on disabled ones. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* One keyboard focus ring everywhere; .field:focus overrides with its own. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
 /* One bright palette, no dark override: the kitchen is sunny even when the
    OS isn't. */
 @theme {
   --color-paper: #f6f4e6;
   --color-ink: #333518;
-  --color-muted: #81845c;
+  /* Darkest olive that still reads muted: 4.8:1 on paper, for WCAG AA. */
+  --color-muted: #6b6e48;
   --color-line: #e4e1c2;
   --color-card: #fdfcf2;
   --color-accent: #66761a;

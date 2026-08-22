@@ -27,8 +27,9 @@ export default function RecipeCard({ recipe }: { recipe: SerializedRecipe }) {
         )}
         {favorited && (
           <span
+            role="img"
+            aria-label="A favourite"
             className="absolute right-2 top-2 rounded-full bg-card/90 px-2 py-1 text-xs"
-            title="A favourite"
           >
             ★
           </span>
@@ -48,7 +49,13 @@ export default function RecipeCard({ recipe }: { recipe: SerializedRecipe }) {
           {recipe.totalMinutes !== null && <span>{recipe.totalMinutes} min</span>}
           {recipe.servings !== null && <span>Serves {recipe.servings}</span>}
           {recipe.averageStars !== null && (
-            <span className="text-accent">★ {recipe.averageStars}</span>
+            <span
+              role="img"
+              aria-label={`Rated ${recipe.averageStars} of 5`}
+              className="text-accent"
+            >
+              ★ {recipe.averageStars}
+            </span>
           )}
         </div>
 

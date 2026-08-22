@@ -142,7 +142,11 @@ export default async function RecipePage({ params }: Props) {
               .map((rating) => (
                 <li key={rating.userId}>
                   {rating.userName}:{" "}
-                  {rating.stars !== null ? `${"★".repeat(rating.stars)} ` : ""}
+                  {rating.stars !== null && (
+                    <span role="img" aria-label={`${rating.stars} of 5 stars`}>
+                      {"★".repeat(rating.stars)}{" "}
+                    </span>
+                  )}
                   {rating.favorite ? "· favourite" : ""}
                 </li>
               ))}

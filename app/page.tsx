@@ -61,6 +61,7 @@ export default async function HomePage({
             name="q"
             defaultValue={query ?? ""}
             placeholder="Search recipes…"
+            aria-label="Search recipes"
             className="field w-56"
           />
           <button
@@ -135,6 +136,7 @@ function TagPill({
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={`rounded-full border px-3 py-1 text-xs ${
         active
           ? "border-accent bg-accent-soft text-accent"
