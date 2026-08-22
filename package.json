@@ -10,6 +10,9 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
+    "env:local": "rm -f .env.local && node scripts/env-status.mjs",
+    "env:remote": "ln -sf .env.remote .env.local && node scripts/env-status.mjs",
+    "env:status": "node scripts/env-status.mjs",
     "user:add": "tsx scripts/create-user.ts"
   },
   "dependencies": {

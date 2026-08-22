@@ -7,12 +7,16 @@
  * Without --password a strong one is generated and printed once.
  */
 import { randomBytes } from "node:crypto";
+import { existsSync } from "node:fs";
 
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
 import { PrismaClient } from "../generated/prisma/client";
+
+// Target the same database the app is using: .env.local if present, else .env.
+loadEnv({ path: existsSync(".env.local") ? ".env.local" : ".env" });
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),

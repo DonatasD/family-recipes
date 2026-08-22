@@ -24,6 +24,8 @@ There is no test runner configured.
 
 Required env vars: `DATABASE_URL`, `DIRECT_URL` (pooled vs. direct Postgres), `AUTH_SECRET` (`openssl rand -base64 32`), and `BLOB_READ_WRITE_TOKEN` for Vercel Blob.
 
+**Two database modes.** *local* (no `.env.local`; everything reads `.env` → the `recipes-pg` Docker Postgres, isolated test data) and *remote* (`.env.local` symlinked to `.env.remote`, a `vercel env pull` snapshot → Neon, the **production** database shared with the live site). Switch with `npm run env:local` / `npm run env:remote`, inspect with `npm run env:status`, and restart `next dev` after switching — `lib/db.ts` caches the Prisma client, so a hot env reload alone keeps the old connection. `prisma.config.ts` and `scripts/create-user.ts` resolve the same file as the app, so `db:push` and `user:add` always hit the database the app is using; remember that schema changes must eventually be pushed in **both** modes. Refresh remote credentials with `vercel env pull .env.remote`. Vercel Blob has no local emulator, so photos upload to the shared store in either mode.
+
 ## Toolchain constraints
 
 - **Node 22.12+ is required** (Prisma 7 uses `require(esm)`); `.nvmrc` pins 24. On older Node, `prisma generate` fails with `ERR_REQUIRE_ESM`.
