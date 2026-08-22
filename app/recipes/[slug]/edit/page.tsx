@@ -20,7 +20,7 @@ export default async function EditRecipePage({ params }: Props) {
   if (!row) notFound();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-6">
       <h1 className="font-display text-3xl">Edit recipe</h1>
       <RecipeForm recipe={serializeRecipe(row)} />
     </div>
