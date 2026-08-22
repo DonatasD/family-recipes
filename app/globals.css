@@ -31,32 +31,12 @@
   --font-display: var(--font-baloo), ui-rounded, "Comic Sans MS", ui-serif,
     Georgia, serif;
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-
-  /* Olive-grove bunting: olive, mustard, terracotta, sage. */
-  --stripe: linear-gradient(
-    90deg,
-    #66761a 0%,
-    #66761a 25%,
-    #e3b62e 25%,
-    #e3b62e 50%,
-    #cf6b3f 50%,
-    #cf6b3f 75%,
-    #a9b665 75%,
-    #a9b665 100%
-  );
 }
 
 body {
   background-color: var(--color-paper);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
-}
-
-body::before {
-  content: "";
-  display: block;
-  height: 5px;
-  background: var(--stripe);
 }
 
 /* Inputs share one look across the whole app. Layered as components so

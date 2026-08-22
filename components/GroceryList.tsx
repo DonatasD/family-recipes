@@ -20,7 +20,7 @@ export type PickerRecipe = {
   totalMinutes: number | null;
 };
 
-/** Bunting colours from globals.css, reused as category markers. */
+/** Olive, mustard, terracotta, sage — the palette's accents as category markers. */
 const CATEGORY_COLORS: Record<GroceryCategoryId, string> = {
   veg: "#66761a",
   meat: "#cf6b3f",

@@ -20,7 +20,8 @@ export default function SignOutButton() {
       type="button"
       onClick={signOut}
       disabled={pending}
-      className="text-muted hover:text-accent disabled:opacity-50"
+      // ink at 80%, not muted: muted misses AA on the header's soft green
+      className="text-ink/80 hover:text-accent disabled:opacity-50"
     >
       Sign out
     </button>

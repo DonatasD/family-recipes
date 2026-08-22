@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import CatDoodles from "@/components/CatDoodles";
 import GardenScene from "@/components/GardenScene";
+import LogoMark from "@/components/LogoMark";
 import SignOutButton from "@/components/SignOutButton";
 import "./globals.css";
 
@@ -24,6 +25,29 @@ export const metadata: Metadata = {
   description: "Our recipe collection",
 };
 
+/** Time-of-day greeting in Lithuanian, on Vilnius time wherever the server runs. */
+function greeting(): string {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "Europe/Vilnius",
+    }).format(new Date())
+  );
+  if (hour < 5 || hour >= 23) return "Labanakt";
+  if (hour < 11) return "Labas rytas";
+  if (hour < 17) return "Labas";
+  return "Labas vakaras";
+}
+
+/** Lithuanian vocative for the two names in this house: Ugnė → Ugne, Donatas → Donatai; anything else passes through. */
+function vocative(name: string): string {
+  const first = name.split(" ")[0];
+  if (first.endsWith("ė")) return `${first.slice(0, -1)}e`;
+  if (first.endsWith("as")) return `${first.slice(0, -2)}ai`;
+  return first;
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -38,12 +62,13 @@ export default async function RootLayout({
         >
           Skip to content
         </a>
-        <header className="border-b border-line">
+        <header className="border-b border-line bg-accent-soft">
           <div className="mx-auto flex max-w-5xl items-center gap-4 px-5 py-4">
             <Link
               href="/"
-              className="font-display text-xl tracking-tight hover:text-accent"
+              className="flex items-center gap-2 font-display text-xl tracking-tight hover:text-accent"
             >
+              <LogoMark className="h-8 w-auto shrink-0" />
               Don &amp; Ugnė&rsquo;s Recipes
             </Link>
 
@@ -58,7 +83,10 @@ export default async function RootLayout({
                 <Link href="/settings" className="hover:text-accent">
                   Settings
                 </Link>
-                <span className="text-muted">{user.name}</span>
+                {/* ink at 80% instead of muted: muted misses AA on this green */}
+                <span className="text-ink/80">
+                  {greeting()}, {vocative(user.name)}!
+                </span>
                 <SignOutButton />
               </nav>
             )}
@@ -69,7 +97,7 @@ export default async function RootLayout({
           {children}
         </main>
 
-        <footer className="mx-auto flex w-full max-w-5xl items-end justify-between gap-4 px-5 pb-4 pt-4 text-xs text-muted">
+        <footer className="mx-auto flex w-full max-w-5xl items-end gap-4 px-5 pb-4 pt-4 text-xs text-muted">
           <span>Made for two people who cook — and two cats who supervise.</span>
           <CatDoodles className="h-14 w-auto shrink-0" />
         </footer>
