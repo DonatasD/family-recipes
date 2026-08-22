@@ -43,20 +43,23 @@ body::before {
   background: var(--stripe);
 }
 
-/* Inputs share one look across the whole app. */
-.field {
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-line);
-  background-color: var(--color-card);
-  color: var(--color-ink);
-  padding: 0.5rem 0.75rem;
-  font-size: 0.95rem;
-}
+/* Inputs share one look across the whole app. Layered as components so
+   per-element utilities (w-20, flex-1) can still override width. */
+@layer components {
+  .field {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-card);
+    color: var(--color-ink);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+  }
 
-.field:focus {
-  outline: 2px solid var(--color-accent);
-  outline-offset: -1px;
+  .field:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -1px;
+  }
 }
 
 /* Garden scene: the top fade blends the sky into the page paper. */
