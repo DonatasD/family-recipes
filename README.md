@@ -5,7 +5,8 @@ or uploaded over a JSON API.
 
 - **Stack** — Next.js 16 (App Router) · React 19 · Tailwind v4 · Prisma 7 · Postgres (Neon) · Vercel Blob
 - **Access** — every page and endpoint requires a signed-in account. There is no
-  public view and no signup route; accounts are created from the command line.
+  public view and no signup route; accounts are created from the command line,
+  or by signing in with an allow-listed Google account.
 
 ## Requirements
 
@@ -37,9 +38,28 @@ an email that already exists resets that password but keeps the API token.
 | `DIRECT_URL` | Neon **direct** connection string — used by `db:push` and migrations |
 | `AUTH_SECRET` | Signs the session cookie. `openssl rand -base64 32` |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token for photos. Set automatically on Vercel; only needed locally |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Enables **Continue with Google** on the sign-in page |
+| `GOOGLE_ALLOWED_EMAILS` | Comma-separated Google accounts that may sign in. Unset means nobody |
 
 Both Neon strings are in the Neon dashboard under **Connection string** — one
 with `-pooler` in the host, one without.
+
+### Sign in with Google
+
+Password accounts always work. To also allow Google sign-in:
+
+1. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials)
+   create an **OAuth client ID** of type *Web application*. Add
+   `http://localhost:3000/api/auth/google/callback` and
+   `https://<your domain>/api/auth/google/callback` as authorised redirect URIs.
+   If the consent screen is in *Testing* mode, add the same people as test users.
+2. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_ALLOWED_EMAILS`
+   (locally in `.env`, on Vercel under **Settings → Environment Variables**).
+
+Only addresses in `GOOGLE_ALLOWED_EMAILS` get in. An allow-listed address with
+an existing password account signs into that account; one without gets an
+account created on first sign-in, with an API token but no password (run
+`user:add` later to give it one).
 
 ### Running against a local database instead
 
@@ -198,10 +218,11 @@ app/
   settings/                   API token and endpoint reference
   recipes/new/                add form
   recipes/[slug]/             recipe page, and /edit
-  api/                        JSON API
+  api/                        JSON API (api/auth/google/ is the OAuth flow)
 components/                   form, card, rating, small client bits
 lib/
   auth.ts                     bearer token + session resolution
+  google.ts                   Sign in with Google (OAuth 2.0 / OIDC)
   session.ts                  JWT cookie signing
   recipes.ts                  Zod schemas, slugs, serializer
   mcp.ts                      MCP server tools (served at api/mcp)

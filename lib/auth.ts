@@ -80,3 +80,23 @@ export async function getSessionUser(): Promise<AuthUser | null> {
 export async function getApiUser(request: Request): Promise<AuthUser | null> {
   return (await userFromBearer(request)) ?? (await getSessionUser());
 }
+
+/**
+ * Signs in an allow-listed Google account. An existing account with the same
+ * email is simply used (its name and API token stay as they are); otherwise
+ * one is created with no password — Google is its only way in until
+ * `user:add` sets one.
+ */
+export async function signInWithGoogle(profile: {
+  email: string;
+  name: string;
+}): Promise<AuthUser> {
+  const email = profile.email.toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email }, select: USER_FIELDS });
+  if (existing) return existing;
+
+  return prisma.user.create({
+    data: { email, name: profile.name, apiToken: generateApiToken() },
+    select: USER_FIELDS,
+  });
+}

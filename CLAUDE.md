@@ -22,7 +22,7 @@ npx prisma generate      # regenerate the client after editing schema.prisma
 
 There is no test runner configured.
 
-Required env vars: `DATABASE_URL`, `DIRECT_URL` (pooled vs. direct Postgres), `AUTH_SECRET` (`openssl rand -base64 32`), and `BLOB_READ_WRITE_TOKEN` for Vercel Blob.
+Required env vars: `DATABASE_URL`, `DIRECT_URL` (pooled vs. direct Postgres), `AUTH_SECRET` (`openssl rand -base64 32`), and `BLOB_READ_WRITE_TOKEN` for Vercel Blob. Optional: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ALLOWED_EMAILS` for Google sign-in.
 
 **Two database modes.** *local* (no `.env.local`; everything reads `.env` → the `recipes-pg` Docker Postgres, isolated test data) and *remote* (`.env.local` symlinked to `.env.remote`, a `vercel env pull` snapshot → Neon, the **production** database shared with the live site). Switch with `npm run env:local` / `npm run env:remote`, inspect with `npm run env:status`, and restart `next dev` after switching — `lib/db.ts` caches the Prisma client, so a hot env reload alone keeps the old connection. `prisma.config.ts` and `scripts/create-user.ts` resolve the same file as the app, so `db:push` and `user:add` always hit the database the app is using; remember that schema changes must eventually be pushed in **both** modes. Refresh remote credentials with `vercel env pull .env.remote`. Vercel Blob has no local emulator, so photos upload to the shared store in either mode.
 
@@ -34,6 +34,8 @@ Required env vars: `DATABASE_URL`, `DIRECT_URL` (pooled vs. direct Postgres), `A
 ## Architecture
 
 **Two authentication paths, one resolver.** `lib/auth.ts` `getApiUser(request)` tries a `Authorization: Bearer <token>` personal API token first (constant-time compared, prefix `rcp_`), then falls back to the session cookie. API routes call `getApiUser`; server components call `requireUser()` from `lib/guard.ts`, which redirects instead of returning 401. Sessions are HS256 JWTs (`jose`) in the `recipes_session` cookie — `lib/session.ts` is deliberately dependency-light so it stays edge-safe, while `lib/auth.ts` is `server-only` (Prisma + bcrypt).
+
+**Google sign-in is a second way to get a session cookie.** `lib/google.ts` talks to Google's OAuth 2.0 / OIDC endpoints directly (no auth library): `GET /api/auth/google` sets a signed `recipes_oauth` cookie holding the CSRF state, PKCE verifier and `next` path, and `/api/auth/google/callback` exchanges the code, verifies the ID token against Google's JWKS, then requires `email_verified` **and** membership in `GOOGLE_ALLOWED_EMAILS` (comma-separated; unset means nobody). An allow-listed email with an existing `User` signs into it; otherwise `signInWithGoogle` creates one with `passwordHash = null`, which the password route treats as a wrong password. The button only renders when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set. The redirect URI is derived from the request host, so both localhost and every production hostname must be registered in the Google Cloud console.
 
 **MCP is a third entry point over the same auth.** `app/api/mcp/route.ts` mounts an `mcp-handler` Streamable HTTP server (stateless, no sessions/Redis) wrapped in `withMcpAuth`, which accepts only the personal API tokens via `getUserByApiToken`. The tool definitions live in `lib/mcp.ts` — kept free of `server-only` imports so they can be exercised outside a Next.js request — and reuse the Zod schemas and serializer from `lib/recipes.ts`. There is deliberately no OAuth authorization server.
 

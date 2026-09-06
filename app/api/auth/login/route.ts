@@ -25,8 +25,9 @@ export async function POST(request: Request) {
     where: { email: parsed.data.email },
   });
 
-  // Same response either way, so this can't be used to enumerate accounts.
-  const ok = user
+  // Same response either way, so this can't be used to enumerate accounts
+  // (or tell that an account is Google-only and has no password).
+  const ok = user?.passwordHash
     ? await verifyPassword(parsed.data.password, user.passwordHash)
     : false;
   if (!user || !ok) return jsonError(401, "Wrong email or password");
