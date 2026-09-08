@@ -46,7 +46,7 @@ export default async function SettingsPage() {
           <li>
             Under <strong>Actions</strong>, choose{" "}
             <strong>Create new action → Import from URL</strong> and paste{" "}
-            <code>{origin}/api/openapi.json</code>.
+            <code className="break-all">{origin}/api/openapi.json</code>.
           </li>
           <li>
             Set <strong>Authentication</strong> to <strong>API Key</strong>{" "}

@@ -21,7 +21,8 @@ export default function SignOutButton() {
       onClick={signOut}
       disabled={pending}
       // ink at 80%, not muted: muted misses AA on the header's soft green
-      className="text-ink/80 hover:text-accent disabled:opacity-50"
+      // text-left and py-2: it sits in the stacked mobile menu alongside the links
+      className="py-2 text-left text-ink/80 hover:text-accent disabled:opacity-50 md:py-0"
     >
       Sign out
     </button>

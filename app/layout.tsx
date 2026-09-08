@@ -6,7 +6,7 @@ import { getSessionUser } from "@/lib/auth";
 import CatDoodles from "@/components/CatDoodles";
 import GardenScene from "@/components/GardenScene";
 import LogoMark from "@/components/LogoMark";
-import SignOutButton from "@/components/SignOutButton";
+import SiteNav from "@/components/SiteNav";
 import "./globals.css";
 
 // latin-ext keeps Lithuanian titles (Šaltibarščiai, Ugnė) in the same face.
@@ -63,32 +63,18 @@ export default async function RootLayout({
           Skip to content
         </a>
         <header className="border-b border-line bg-accent-soft">
-          <div className="mx-auto flex max-w-5xl items-center gap-4 px-5 py-4">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4">
             <Link
               href="/"
-              className="flex items-center gap-2 font-display text-xl tracking-tight hover:text-accent"
+              // min-w-0 + flex-1: on the narrowest phones the title wraps instead of pushing the menu button onto a second row
+              className="flex min-w-0 flex-1 items-center gap-2 font-display text-lg tracking-tight hover:text-accent md:flex-none md:text-xl"
             >
               <LogoMark className="h-8 w-auto shrink-0" />
               Don &amp; Ugnė&rsquo;s Recipes
             </Link>
 
             {user && (
-              <nav className="ml-auto flex items-center gap-4 text-sm">
-                <Link href="/recipes/new" className="hover:text-accent">
-                  Add recipe
-                </Link>
-                <Link href="/grocery" className="hover:text-accent">
-                  Grocery list
-                </Link>
-                <Link href="/settings" className="hover:text-accent">
-                  Settings
-                </Link>
-                {/* ink at 80% instead of muted: muted misses AA on this green */}
-                <span className="text-ink/80">
-                  {greeting()}, {vocative(user.name)}!
-                </span>
-                <SignOutButton />
-              </nav>
+              <SiteNav salutation={`${greeting()}, ${vocative(user.name)}!`} />
             )}
           </div>
         </header>
