@@ -6,7 +6,7 @@ import Link from "next/link";
 import RecipeCard from "@/components/RecipeCard";
 import type { SerializedRecipe } from "@/lib/recipes";
 
-const DEBOUNCE_MS = 350;
+const DEBOUNCE_MS = 800;
 
 /** Case- and accent-insensitive, so "salti" finds "Šaltibarščiai". */
 function fold(text: string): string {
