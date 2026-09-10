@@ -2,8 +2,9 @@ import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 import { getApiUser } from "@/lib/auth";
-import { jsonError, notFound, unauthorized } from "@/lib/api";
+import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/permissions";
 import { recipeInclude, serializeRecipe } from "@/lib/recipes";
 
 export const runtime = "nodejs";
@@ -22,6 +23,7 @@ type Params = { params: Promise<{ idOrSlug: string }> };
 export async function POST(request: Request, { params }: Params) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "recipes:edit")) return forbidden("recipes:edit");
 
   const idOrSlug = (await params).idOrSlug;
   const recipe = await prisma.recipe.findFirst({

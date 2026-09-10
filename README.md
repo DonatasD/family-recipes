@@ -6,7 +6,8 @@ or uploaded over a JSON API.
 - **Stack** — Next.js 16 (App Router) · React 19 · Tailwind v4 · Prisma 7 · Postgres (Neon) · Vercel Blob
 - **Access** — every page and endpoint requires a signed-in account. There is no
   public view and no signup route; accounts are created from the command line,
-  or by signing in with an allow-listed Google account.
+  or by signing in with an allow-listed Google account. What each account may
+  do is a set of permissions — see [Permissions](#permissions).
 
 ## Requirements
 
@@ -22,13 +23,51 @@ nvm use
 npm install
 cp .env.example .env      # then fill in the values below
 npm run db:push           # create the tables
-npm run user:add -- --email you@example.com --name "Your name"
+npm run user:add -- --email you@example.com --name "Your name" --permissions all
 npm run dev               # http://localhost:3000
 ```
 
 `user:add` prints a generated password and an API token. It is the only time
 they are shown — put both in a password manager. Run it once per person; adding
-an email that already exists resets that password but keeps the API token.
+an email that already exists resets that password but keeps the API token and
+permissions. Give the first account `--permissions all` so the rest can be
+managed from the site.
+
+### Permissions
+
+Everyone with an account can browse recipes and rate them. Anything else is a
+permission granted per person:
+
+| Permission | Allows |
+| --- | --- |
+| `recipes:create` | Adding recipes (site, API, MCP) |
+| `recipes:edit` | Changing recipes and attaching photos |
+| `recipes:delete` | Removing recipes |
+| `grocery` | Seeing and planning the shared grocery list |
+| `users:manage` | Changing other people's permissions on the **Users** page |
+
+Permissions apply everywhere at once — pages, the JSON API, and MCP — because
+they are read from the database on every request rather than stored in the
+session. A missing permission gets `403` from the API and a read-only message
+on the site.
+
+Accounts can also be created on the **Users** page (name, email, permissions,
+and an optional password — a generated one is shown once), which is the same
+as `user:add` without the terminal.
+
+Accounts made with `user:add` get everything except `users:manage` unless
+`--permissions` says otherwise (`all`, `none`, or a comma-separated list); ones
+created by a first Google sign-in start with none. To change permissions from
+the command line (for example to grant `users:manage` to the first person on an
+existing database):
+
+```bash
+npm run user:permissions -- --email you@example.com --grant users:manage
+npm run user:permissions -- --email guest@example.com --set recipes:create,grocery
+```
+
+The site refuses to take `users:manage` away from the last person who has it;
+`user:permissions` is the way back if that ever needs undoing.
 
 ### Environment variables
 
@@ -39,7 +78,7 @@ an email that already exists resets that password but keeps the API token.
 | `AUTH_SECRET` | Signs the session cookie. `openssl rand -base64 32` |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token for photos. Set automatically on Vercel; only needed locally |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Enables **Continue with Google** on the sign-in page |
-| `GOOGLE_ALLOWED_EMAILS` | Comma-separated Google accounts that may sign in. Unset means nobody |
+| `GOOGLE_ALLOWED_EMAILS` | Optional. Comma-separated Google accounts that may always sign in; more can be added on the **Users** page |
 
 Both Neon strings are in the Neon dashboard under **Connection string** — one
 with `-pooler` in the host, one without.
@@ -53,13 +92,16 @@ Password accounts always work. To also allow Google sign-in:
    `http://localhost:3000/api/auth/google/callback` and
    `https://<your domain>/api/auth/google/callback` as authorised redirect URIs.
    If the consent screen is in *Testing* mode, add the same people as test users.
-2. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `GOOGLE_ALLOWED_EMAILS`
-   (locally in `.env`, on Vercel under **Settings → Environment Variables**).
+2. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (locally in `.env`, on
+   Vercel under **Settings → Environment Variables**).
+3. Add the Google accounts that may sign in under **Users → Google sign-in**,
+   or list them in `GOOGLE_ALLOWED_EMAILS` (those show as locked on the page).
 
-Only addresses in `GOOGLE_ALLOWED_EMAILS` get in. An allow-listed address with
-an existing password account signs into that account; one without gets an
-account created on first sign-in, with an API token but no password (run
-`user:add` later to give it one).
+Only addresses on that list get in. An allow-listed address with
+an existing password account signs into that account; one without gets a
+**read-only** account created on first sign-in, with an API token but no
+password (run `user:add` later to give it one, and grant permissions on the
+**Users** page).
 
 ### Running against a local database instead
 
@@ -86,7 +128,7 @@ Then point both `DATABASE_URL` and `DIRECT_URL` at
 
    ```bash
    DATABASE_URL=… DIRECT_URL=… npm run db:push
-   DATABASE_URL=… DIRECT_URL=… npm run user:add -- --email … --name …
+   DATABASE_URL=… DIRECT_URL=… npm run user:add -- --email … --name … --permissions all
    ```
 
 `prisma generate` runs on `postinstall` and again in `build`, so no extra build
@@ -146,6 +188,17 @@ is the saved recipe, including the `slug` its page lives at.
 | `PUT` | `/api/recipes/:idOrSlug/rating` | `{"stars": 1-5, "favorite": true}` — one rating per person |
 | `DELETE` | `/api/recipes/:idOrSlug/rating` | Remove your rating |
 
+Changing recipes needs the matching permission (`recipes:create`,
+`recipes:edit` for `PATCH` and photos, `recipes:delete`); without it the token
+gets `403`. Rating needs none. The grocery endpoints under `/api/grocery` need
+`grocery`.
+
+With `users:manage` there is also `GET`/`POST /api/users` (`POST` takes
+`name`, `email`, `permissions`, optional `password` and returns the generated
+password once), `PATCH /api/users/:id` with `{"permissions": [...]}`, which
+replaces the whole list, and `GET`/`POST /api/google-allowlist` plus
+`DELETE /api/google-allowlist/:email` for the Google sign-in list.
+
 Errors come back as `{"error": "…"}`, with `422` responses adding
 `{"details": {"field": "message"}}`.
 
@@ -196,7 +249,8 @@ Clients that only speak stdio can bridge with
 ```
 
 Tools: `list_recipes`, `get_recipe`, `create_recipe`, `update_recipe`,
-`delete_recipe`. There is no OAuth flow — only the bearer token — so clients
+`delete_recipe` — the last three fail with a message naming the missing
+permission when the token's account lacks it. There is no OAuth flow — only the bearer token — so clients
 that insist on OAuth for remote servers can't connect yet.
 
 ## Scripts
@@ -207,7 +261,8 @@ that insist on OAuth for remote servers can't connect yet.
 | `npm run build` | Production build |
 | `npm run db:push` | Apply `prisma/schema.prisma` to the database |
 | `npm run db:studio` | Browse the data in Prisma Studio |
-| `npm run user:add` | Create or update an account |
+| `npm run user:add` | Create or update an account (`--permissions all\|none\|<ids>`) |
+| `npm run user:permissions` | `--set`, `--grant` or `--revoke` permissions on an account |
 
 ## Layout
 
@@ -216,17 +271,21 @@ app/
   page.tsx                    recipe list, search and tag filter
   login/                      sign-in page
   settings/                   API token and endpoint reference
+  users/                      people, permissions, new accounts, Google list
   recipes/new/                add form
   recipes/[slug]/             recipe page, and /edit
   api/                        JSON API (api/auth/google/ is the OAuth flow)
 components/                   form, card, rating, small client bits
 lib/
   auth.ts                     bearer token + session resolution
+  permissions.ts              permission ids and checks
   google.ts                   Sign in with Google (OAuth 2.0 / OIDC)
+  google-allowlist.ts         who may sign in with Google (env + database)
   session.ts                  JWT cookie signing
   recipes.ts                  Zod schemas, slugs, serializer
   mcp.ts                      MCP server tools (served at api/mcp)
   db.ts                       Prisma client
 prisma/schema.prisma          data model
 scripts/create-user.ts        account creation
+scripts/set-permissions.ts    change an account's permissions
 ```

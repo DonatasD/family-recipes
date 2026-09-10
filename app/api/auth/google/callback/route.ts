@@ -1,12 +1,11 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { signInWithGoogle } from "@/lib/auth";
+import { isGoogleEmailAllowed, signInWithGoogle } from "@/lib/auth";
 import {
   OAUTH_COOKIE,
   callbackUrl,
   exchangeCode,
-  isAllowedEmail,
   readOAuthState,
 } from "@/lib/google";
 import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/session";
@@ -40,7 +39,7 @@ export async function GET(request: Request) {
     verifier: saved.verifier,
   });
   if (!profile) return fail("google_failed");
-  if (!isAllowedEmail(profile.email)) return fail("not_allowed");
+  if (!(await isGoogleEmailAllowed(profile.email))) return fail("not_allowed");
 
   const user = await signInWithGoogle(profile);
   cookieStore.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);

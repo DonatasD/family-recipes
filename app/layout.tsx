@@ -74,7 +74,10 @@ export default async function RootLayout({
             </Link>
 
             {user && (
-              <SiteNav salutation={`${greeting()}, ${vocative(user.name)}!`} />
+              <SiteNav
+                salutation={`${greeting()}, ${vocative(user.name)}!`}
+                permissions={user.permissions}
+              />
             )}
           </div>
         </header>

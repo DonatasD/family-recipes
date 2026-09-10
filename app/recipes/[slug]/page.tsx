@@ -6,6 +6,7 @@ import DeleteRecipeButton from "@/components/DeleteRecipeButton";
 import RatingControl from "@/components/RatingControl";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/guard";
+import { can } from "@/lib/permissions";
 import { recipeInclude, serializeRecipe } from "@/lib/recipes";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -173,15 +174,21 @@ export default async function RecipePage({ params }: Props) {
           </span>
         )}
 
-        <div className="ml-auto flex items-center gap-4">
-          <Link
-            href={`/recipes/${recipe.slug}/edit`}
-            className="rounded-lg border border-line px-4 py-2 hover:border-accent hover:text-accent"
-          >
-            Edit
-          </Link>
-          <DeleteRecipeButton slug={recipe.slug} title={recipe.title} />
-        </div>
+        {(can(user, "recipes:edit") || can(user, "recipes:delete")) && (
+          <div className="ml-auto flex items-center gap-4">
+            {can(user, "recipes:edit") && (
+              <Link
+                href={`/recipes/${recipe.slug}/edit`}
+                className="rounded-lg border border-line px-4 py-2 hover:border-accent hover:text-accent"
+              >
+                Edit
+              </Link>
+            )}
+            {can(user, "recipes:delete") && (
+              <DeleteRecipeButton slug={recipe.slug} title={recipe.title} />
+            )}
+          </div>
+        )}
       </footer>
     </article>
   );

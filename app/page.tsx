@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import RecipeBrowser from "@/components/RecipeBrowser";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/guard";
+import { can } from "@/lib/permissions";
 import { recipeInclude, serializeRecipe } from "@/lib/recipes";
 
 type SearchParams = Promise<{ tag?: string }>;
@@ -13,7 +14,7 @@ export default async function HomePage({
 }: {
   searchParams: SearchParams;
 }) {
-  await requireUser("/");
+  const user = await requireUser("/");
 
   const { tag } = await searchParams;
   const activeTag = tag?.trim().toLowerCase();
@@ -37,6 +38,7 @@ export default async function HomePage({
     <RecipeBrowser
       recipes={recipes}
       activeTag={activeTag}
+      canCreate={can(user, "recipes:create")}
       tagPills={
         tags.length > 0 && (
           <div className="flex flex-wrap gap-2">

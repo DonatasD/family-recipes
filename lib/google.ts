@@ -30,16 +30,17 @@ export function isGoogleLoginEnabled(): boolean {
 }
 
 /**
- * Which Google accounts may sign in, from GOOGLE_ALLOWED_EMAILS
- * (comma-separated). Unset means nobody — this is a private site, so the
- * failure mode is "locked out", never "open to any Google account".
+ * Google accounts allowed in by configuration, from GOOGLE_ALLOWED_EMAILS
+ * (comma-separated). The Users page adds more in the database — see
+ * `isGoogleEmailAllowed` in lib/auth.ts, which checks both. Unset means
+ * nobody from the environment: this is a private site, so the failure mode is
+ * "locked out", never "open to any Google account".
  */
-export function isAllowedEmail(email: string): boolean {
-  const allowed = (process.env.GOOGLE_ALLOWED_EMAILS ?? "")
+export function envAllowedEmails(): string[] {
+  return (process.env.GOOGLE_ALLOWED_EMAILS ?? "")
     .split(",")
     .map((entry) => entry.trim().toLowerCase())
     .filter(Boolean);
-  return allowed.includes(email.trim().toLowerCase());
 }
 
 function secret() {

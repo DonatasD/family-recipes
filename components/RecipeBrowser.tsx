@@ -34,10 +34,12 @@ export default function RecipeBrowser({
   recipes,
   activeTag,
   tagPills,
+  canCreate,
 }: {
   recipes: SerializedRecipe[];
   activeTag?: string;
   tagPills: React.ReactNode;
+  canCreate: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -82,9 +84,11 @@ export default function RecipeBrowser({
           <p className="mt-2 text-sm text-muted">
             {needle || activeTag
               ? "No recipe matches that. Try a different search."
-              : "Add your first recipe, or POST one to /api/recipes."}
+              : canCreate
+                ? "Add your first recipe, or POST one to /api/recipes."
+                : "Nothing has been added yet."}
           </p>
-          {!needle && !activeTag && (
+          {canCreate && !needle && !activeTag && (
             <Link
               href="/recipes/new"
               className="mt-5 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"

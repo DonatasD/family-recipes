@@ -16,10 +16,22 @@ model User {
   /// Null for accounts that only ever signed in with Google.
   passwordHash String?
   apiToken     String   @unique
+  /// Permission ids from lib/permissions.ts. Reading and rating need none.
+  /// Checked on every request (never baked into the session cookie), so a
+  /// change takes effect immediately. The default keeps accounts that predate
+  /// permissions working as before; only `users:manage` must be granted by hand.
+  permissions  String[] @default(["recipes:create", "recipes:edit", "recipes:delete", "grocery"])
   createdAt    DateTime @default(now())
 
   recipes Recipe[]
   ratings Rating[]
+}
+
+/// A Google account allowed to sign in, added on the Users page. Entries in
+/// GOOGLE_ALLOWED_EMAILS are allowed too but can't be removed from the site.
+model GoogleAllowedEmail {
+  email   String   @id
+  addedAt DateTime @default(now())
 }
 
 model Recipe {

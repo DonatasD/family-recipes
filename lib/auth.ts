@@ -5,15 +5,40 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/db";
+import { envAllowedEmails } from "@/lib/google";
+import { normalizePermissions, type Permission } from "@/lib/permissions";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
 
 export type AuthUser = {
   id: string;
   email: string;
   name: string;
+  permissions: Permission[];
 };
 
-const USER_FIELDS = { id: true, email: true, name: true } as const;
+const USER_FIELDS = {
+  id: true,
+  email: true,
+  name: true,
+  permissions: true,
+} as const;
+
+type UserRow = {
+  id: string;
+  email: string;
+  name: string;
+  permissions: string[];
+};
+
+/** The column is a plain text[]; drop anything the code no longer recognises. */
+function toAuthUser(row: UserRow): AuthUser {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    permissions: normalizePermissions(row.permissions),
+  };
+}
 
 export function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 12);
@@ -53,7 +78,7 @@ export async function getUserByApiToken(token: string): Promise<AuthUser | null>
   });
   if (!user || !tokensMatch(user.apiToken, token)) return null;
 
-  return { id: user.id, email: user.email, name: user.name };
+  return toAuthUser(user);
 }
 
 async function userFromBearer(request: Request): Promise<AuthUser | null> {
@@ -70,7 +95,11 @@ export async function getSessionUser(): Promise<AuthUser | null> {
   const userId = await verifySession(token);
   if (!userId) return null;
 
-  return prisma.user.findUnique({ where: { id: userId }, select: USER_FIELDS });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: USER_FIELDS,
+  });
+  return user ? toAuthUser(user) : null;
 }
 
 /**
@@ -82,10 +111,27 @@ export async function getApiUser(request: Request): Promise<AuthUser | null> {
 }
 
 /**
+ * A Google account may sign in when it is either in GOOGLE_ALLOWED_EMAILS or
+ * was added on the Users page. Having a password account is deliberately not
+ * enough on its own.
+ */
+export async function isGoogleEmailAllowed(email: string): Promise<boolean> {
+  const normalized = email.trim().toLowerCase();
+  if (envAllowedEmails().includes(normalized)) return true;
+  const row = await prisma.googleAllowedEmail.findUnique({
+    where: { email: normalized },
+    select: { email: true },
+  });
+  return row !== null;
+}
+
+/**
  * Signs in an allow-listed Google account. An existing account with the same
- * email is simply used (its name and API token stay as they are); otherwise
- * one is created with no password — Google is its only way in until
- * `user:add` sets one.
+ * email is simply used (its name, permissions and API token stay as they
+ * are); otherwise one is created with no password — Google is its only way in
+ * until `user:add` sets one. The allowlist decides who gets in; permissions
+ * decide what they can do, so a brand-new account starts read-only until
+ * someone grants it more under Settings.
  */
 export async function signInWithGoogle(profile: {
   email: string;
@@ -93,10 +139,16 @@ export async function signInWithGoogle(profile: {
 }): Promise<AuthUser> {
   const email = profile.email.toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email }, select: USER_FIELDS });
-  if (existing) return existing;
+  if (existing) return toAuthUser(existing);
 
-  return prisma.user.create({
-    data: { email, name: profile.name, apiToken: generateApiToken() },
+  const created = await prisma.user.create({
+    data: {
+      email,
+      name: profile.name,
+      apiToken: generateApiToken(),
+      permissions: [],
+    },
     select: USER_FIELDS,
   });
+  return toAuthUser(created);
 }

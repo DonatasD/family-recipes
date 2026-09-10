@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getApiUser } from "@/lib/auth";
 import {
+  forbidden,
   jsonError,
   notFound,
   readJson,
@@ -9,6 +10,7 @@ import {
   validationError,
 } from "@/lib/api";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/permissions";
 import {
   recipeInclude,
   recipeUpdateSchema,
@@ -41,6 +43,7 @@ export async function GET(request: Request, { params }: Params) {
 export async function PATCH(request: Request, { params }: Params) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "recipes:edit")) return forbidden("recipes:edit");
 
   const existing = await findRecipe((await params).idOrSlug);
   if (!existing) return notFound();
@@ -71,6 +74,7 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(request: Request, { params }: Params) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "recipes:delete")) return forbidden("recipes:delete");
 
   const existing = await findRecipe((await params).idOrSlug);
   if (!existing) return notFound();

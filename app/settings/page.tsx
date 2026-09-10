@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import ApiTokenPanel from "@/components/ApiTokenPanel";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/guard";
+import { PERMISSION_LABELS, can, canWrite } from "@/lib/permissions";
 
 export const metadata = { title: "Settings" };
 
@@ -13,6 +14,8 @@ export default async function SettingsPage() {
     where: { id: user.id },
     select: { apiToken: true },
   });
+  const writer = canWrite(user);
+  const granted = user.permissions.map((p) => PERMISSION_LABELS[p].toLowerCase());
 
   // The ChatGPT instructions below need copy-pasteable absolute URLs.
   const requestHeaders = await headers();
@@ -25,37 +28,47 @@ export default async function SettingsPage() {
       <div>
         <h1 className="font-display text-3xl">Settings</h1>
         <p className="mt-1 text-sm text-muted">
-          Signed in as {user.name} ({user.email})
+          Signed in as {user.name} ({user.email}). You can read and rate
+          recipes
+          {granted.length > 0 ? `, and: ${granted.join(", ")}.` : "."}
         </p>
       </div>
 
-      <ApiTokenPanel initialToken={apiToken} />
+      <ApiTokenPanel initialToken={apiToken} readOnly={!writer} />
 
-      <section className="space-y-4">
-        <h2 className="font-display text-xl">Import recipes with ChatGPT</h2>
+      {!writer && (
         <p className="text-sm text-muted">
-          A custom GPT can read a recipe from a link, a photo, or pasted text
-          and save it straight into this collection. Building one takes a few
-          minutes and a paid ChatGPT plan:
+          Your account is read-only: the token and the endpoints below can
+          fetch recipes and set your ratings, but not add or change anything.
         </p>
-        <ol className="list-decimal space-y-2 pl-5 text-sm">
-          <li>
-            In ChatGPT, open <strong>Explore GPTs → Create → Configure</strong>{" "}
-            and name it something like &ldquo;Recipe importer&rdquo;.
-          </li>
-          <li>
-            Under <strong>Actions</strong>, choose{" "}
-            <strong>Create new action → Import from URL</strong> and paste{" "}
-            <code className="break-all">{origin}/api/openapi.json</code>.
-          </li>
-          <li>
-            Set <strong>Authentication</strong> to <strong>API Key</strong>{" "}
-            with auth type <strong>Bearer</strong>, and paste your API token
-            from above.
-          </li>
-          <li>Give the GPT instructions along these lines:</li>
-        </ol>
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-line bg-card p-4 text-xs leading-relaxed">
+      )}
+
+      {can(user, "recipes:create") && (
+        <section className="space-y-4">
+          <h2 className="font-display text-xl">Import recipes with ChatGPT</h2>
+          <p className="text-sm text-muted">
+            A custom GPT can read a recipe from a link, a photo, or pasted text
+            and save it straight into this collection. Building one takes a few
+            minutes and a paid ChatGPT plan:
+          </p>
+          <ol className="list-decimal space-y-2 pl-5 text-sm">
+            <li>
+              In ChatGPT, open <strong>Explore GPTs → Create → Configure</strong>{" "}
+              and name it something like &ldquo;Recipe importer&rdquo;.
+            </li>
+            <li>
+              Under <strong>Actions</strong>, choose{" "}
+              <strong>Create new action → Import from URL</strong> and paste{" "}
+              <code className="break-all">{origin}/api/openapi.json</code>.
+            </li>
+            <li>
+              Set <strong>Authentication</strong> to <strong>API Key</strong>{" "}
+              with auth type <strong>Bearer</strong>, and paste your API token
+              from above.
+            </li>
+            <li>Give the GPT instructions along these lines:</li>
+          </ol>
+          <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-line bg-card p-4 text-xs leading-relaxed">
 {`You save recipes into Don & Ugnė's private recipe collection.
 
 Given a link, read the page and extract the recipe; given a photo or
@@ -73,8 +86,9 @@ recipe came from.
 
 After saving, link to the recipe as ${origin}/recipes/<slug from the
 response>.`}
-        </pre>
-      </section>
+          </pre>
+        </section>
+      )}
 
       <section className="space-y-4">
         <h2 className="font-display text-xl">Uploading recipes via the API</h2>

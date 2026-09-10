@@ -13,7 +13,8 @@
     "env:local": "rm -f .env.local && node scripts/env-status.mjs",
     "env:remote": "ln -sf .env.remote .env.local && node scripts/env-status.mjs",
     "env:status": "node scripts/env-status.mjs",
-    "user:add": "tsx scripts/create-user.ts"
+    "user:add": "tsx scripts/create-user.ts",
+    "user:permissions": "tsx scripts/set-permissions.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0",

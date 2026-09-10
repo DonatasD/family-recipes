@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  forbidden,
   jsonError,
   notFound,
   readJson,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/api";
 import { getApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/permissions";
 import { getGroceryList, groceryItemUpdateSchema } from "@/lib/grocery-server";
 
 export const runtime = "nodejs";
@@ -19,6 +21,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, { params }: Params) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "grocery")) return forbidden("grocery");
 
   const { id } = await params;
   const item = await prisma.groceryItem.findUnique({
@@ -44,6 +47,7 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(request: Request, { params }: Params) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "grocery")) return forbidden("grocery");
 
   const { id } = await params;
   const deleted = await prisma.groceryItem.deleteMany({ where: { id } });

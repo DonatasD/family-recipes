@@ -15,6 +15,9 @@ export async function GET(request: Request) {
 function buildSpec(origin: string) {
   const recipeRef = { $ref: "#/components/schemas/Recipe" };
   const unauthorized = { description: "Missing or invalid token" };
+  const forbidden = {
+    description: "The account lacks the permission this operation needs",
+  };
 
   return {
     openapi: "3.1.0",
@@ -23,8 +26,9 @@ function buildSpec(origin: string) {
       version: "1.0.0",
       description:
         "A private two-person recipe collection. Every operation requires a " +
-        "personal API token sent as a bearer header. A saved recipe's page " +
-        `lives at ${origin}/recipes/{slug}.`,
+        "personal API token sent as a bearer header; accounts without the " +
+        "relevant permission get 403 on operations that change data. A saved recipe's " +
+        `page lives at ${origin}/recipes/{slug}.`,
     },
     servers: [{ url: origin }],
     security: [{ bearerAuth: [] }],
@@ -95,6 +99,7 @@ function buildSpec(origin: string) {
               content: { "application/json": { schema: recipeRef } },
             },
             "401": unauthorized,
+            "403": forbidden,
             "422": {
               description:
                 "Validation failed; the error field maps field names to messages",
@@ -150,6 +155,7 @@ function buildSpec(origin: string) {
               content: { "application/json": { schema: recipeRef } },
             },
             "401": unauthorized,
+            "403": forbidden,
             "404": { description: "No recipe with that id or slug" },
             "422": { description: "Validation failed" },
           },

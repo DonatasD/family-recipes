@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 export default function ApiTokenPanel({
   initialToken,
+  readOnly,
 }: {
   initialToken: string;
+  readOnly: boolean;
 }) {
   const [token, setToken] = useState(initialToken);
   const [visible, setVisible] = useState(false);
@@ -46,8 +48,8 @@ export default function ApiTokenPanel({
     <section className="space-y-3">
       <h2 className="font-display text-xl">Your API token</h2>
       <p className="text-sm text-muted">
-        Anyone holding this token can read and change our recipes. Keep it in a
-        password manager, not in a shared document.
+        Anyone holding this token can {readOnly ? "read" : "read and change"} our
+        recipes. Keep it in a password manager, not in a shared document.
       </p>
 
       <div className="flex flex-wrap items-center gap-2">

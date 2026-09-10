@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 
 import type { AuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can, type Permission } from "@/lib/permissions";
 import {
   recipeCreateSchema,
   recipeInclude,
@@ -45,6 +46,11 @@ function failure(message: string) {
     isError: true,
   };
 }
+
+const missing = (permission: Permission) =>
+  failure(
+    `This account doesn't have the "${permission}" permission; ask someone who manages people to grant it`
+  );
 
 function findRecipe(idOrSlug: string) {
   return prisma.recipe.findFirst({
@@ -149,6 +155,8 @@ export function registerRecipeTools(server: McpServer) {
     },
     async (data, ctx) => {
       const user = callerOf(ctx);
+      if (!can(user, "recipes:create")) return missing("recipes:create");
+
       const recipe = await prisma.recipe.create({
         data: {
           slug: await uniqueSlug(data.title),
@@ -183,7 +191,7 @@ export function registerRecipeTools(server: McpServer) {
         .extend({ idOrSlug: idOrSlugField }),
     },
     async ({ idOrSlug, ...data }, ctx) => {
-      callerOf(ctx);
+      if (!can(callerOf(ctx), "recipes:edit")) return missing("recipes:edit");
 
       if (Object.values(data).every((value) => value === undefined)) {
         return failure("Provide at least one field to update");
@@ -217,7 +225,8 @@ export function registerRecipeTools(server: McpServer) {
       annotations: { destructiveHint: true },
     },
     async ({ idOrSlug }, ctx) => {
-      callerOf(ctx);
+      if (!can(callerOf(ctx), "recipes:delete")) return missing("recipes:delete");
+
       const existing = await findRecipe(idOrSlug);
       if (!existing) return failure(`Recipe "${idOrSlug}" not found`);
       await prisma.recipe.delete({ where: { id: existing.id } });

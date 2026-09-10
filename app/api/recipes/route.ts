@@ -2,8 +2,15 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { getApiUser } from "@/lib/auth";
-import { jsonError, readJson, unauthorized, validationError } from "@/lib/api";
+import {
+  forbidden,
+  jsonError,
+  readJson,
+  unauthorized,
+  validationError,
+} from "@/lib/api";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/permissions";
 import {
   recipeCreateSchema,
   recipeInclude,
@@ -58,6 +65,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "recipes:create")) return forbidden("recipes:create");
 
   const body = await readJson(request);
   if (body === null) return jsonError(400, "Body must be valid JSON");

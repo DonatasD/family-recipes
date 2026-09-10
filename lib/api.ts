@@ -14,6 +14,13 @@ export const unauthorized = () =>
     "Sign in, or send an API token as: Authorization: Bearer <token>"
   );
 
+/** Signed in, but the account lacks the permission this needs. */
+export const forbidden = (permission: string) =>
+  jsonError(
+    403,
+    `Your account doesn't have the "${permission}" permission; ask someone who manages people to grant it`
+  );
+
 export const notFound = (what = "Recipe") => jsonError(404, `${what} not found`);
 
 /** Flattens Zod issues into { field: message } so API errors are actionable. */

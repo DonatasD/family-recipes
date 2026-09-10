@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 
+import NoPermissionNotice from "@/components/NoPermissionNotice";
 import RecipeForm from "@/components/RecipeForm";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/guard";
+import { can } from "@/lib/permissions";
 import { recipeInclude, serializeRecipe } from "@/lib/recipes";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -11,7 +13,10 @@ export const metadata = { title: "Edit recipe" };
 
 export default async function EditRecipePage({ params }: Props) {
   const { slug } = await params;
-  await requireUser(`/recipes/${slug}/edit`);
+  const user = await requireUser(`/recipes/${slug}/edit`);
+  if (!can(user, "recipes:edit")) {
+    return <NoPermissionNotice needs="recipes:edit" />;
+  }
 
   const row = await prisma.recipe.findUnique({
     where: { slug },

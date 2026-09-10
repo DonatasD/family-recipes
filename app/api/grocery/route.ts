@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { jsonError, readJson, unauthorized, validationError } from "@/lib/api";
+import {
+  forbidden,
+  jsonError,
+  readJson,
+  unauthorized,
+  validationError,
+} from "@/lib/api";
 import { getApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/permissions";
 import { getGroceryList } from "@/lib/grocery-server";
 
 export const runtime = "nodejs";
@@ -12,6 +19,7 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "grocery")) return forbidden("grocery");
 
   return NextResponse.json(await getGroceryList());
 }
@@ -23,6 +31,7 @@ const bulkSchema = z.object({ checked: z.literal(false) });
 export async function PATCH(request: Request) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "grocery")) return forbidden("grocery");
 
   const body = await readJson(request);
   if (body === null) return jsonError(400, "Body must be valid JSON");
@@ -41,6 +50,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "grocery")) return forbidden("grocery");
 
   await prisma.$transaction([
     prisma.groceryRecipe.deleteMany(),

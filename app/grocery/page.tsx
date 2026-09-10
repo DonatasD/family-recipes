@@ -1,12 +1,15 @@
 import GroceryList, { type PickerRecipe } from "@/components/GroceryList";
+import NoPermissionNotice from "@/components/NoPermissionNotice";
 import { prisma } from "@/lib/db";
 import { getGroceryList } from "@/lib/grocery-server";
 import { requireUser } from "@/lib/guard";
+import { can } from "@/lib/permissions";
 
 export const metadata = { title: "Grocery list — Don & Ugnė's Recipes" };
 
 export default async function GroceryPage() {
-  await requireUser("/grocery");
+  const user = await requireUser("/grocery");
+  if (!can(user, "grocery")) return <NoPermissionNotice needs="grocery" />;
 
   const [list, rows] = await Promise.all([
     getGroceryList(),

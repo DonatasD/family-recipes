@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  forbidden,
   jsonError,
   notFound,
   readJson,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/api";
 import { getApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/permissions";
 import {
   getGroceryList,
   groceryRecipeUpdateSchema,
@@ -29,6 +31,7 @@ async function findEntry(idOrSlug: string) {
 export async function PATCH(request: Request, { params }: Params) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "grocery")) return forbidden("grocery");
 
   const entry = await findEntry((await params).idOrSlug);
   if (!entry) return notFound("Recipe on the grocery list");
@@ -54,6 +57,7 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(request: Request, { params }: Params) {
   const user = await getApiUser(request);
   if (!user) return unauthorized();
+  if (!can(user, "grocery")) return forbidden("grocery");
 
   const entry = await findEntry((await params).idOrSlug);
   if (!entry) return notFound("Recipe on the grocery list");

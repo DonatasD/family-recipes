@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
+import { can } from "@/lib/permissions";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,10 @@ export async function POST(request: Request) {
       onBeforeGenerateToken: async () => {
         const user = await getSessionUser();
         if (!user) throw new Error("Not signed in");
+        // A photo goes onto a new recipe or an existing one, so either right will do.
+        if (!can(user, "recipes:create") && !can(user, "recipes:edit")) {
+          throw new Error("Your account may not add photos to recipes");
+        }
 
         return {
           allowedContentTypes: [
