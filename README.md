@@ -196,7 +196,8 @@ gets `403`. Rating needs none. The grocery endpoints under `/api/grocery` need
 With `users:manage` there is also `GET`/`POST /api/users` (`POST` takes
 `name`, `email`, `permissions`, optional `password` and returns the generated
 password once), `PATCH /api/users/:id` with `{"permissions": [...]}`, which
-replaces the whole list, and `GET`/`POST /api/google-allowlist` plus
+replaces the whole list, `DELETE /api/users/:id` (their recipes pass to the
+caller; you can't delete yourself), and `GET`/`POST /api/google-allowlist` plus
 `DELETE /api/google-allowlist/:email` for the Google sign-in list.
 
 Errors come back as `{"error": "…"}`, with `422` responses adding

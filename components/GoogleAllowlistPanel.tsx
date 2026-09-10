@@ -95,7 +95,7 @@ export default function GoogleAllowlistPanel({
                   type="button"
                   onClick={() => remove(entry.email)}
                   disabled={busy}
-                  className="text-xs text-muted hover:text-accent disabled:opacity-50"
+                  className="text-xs text-muted hover:text-danger disabled:opacity-50"
                 >
                   Remove
                 </button>

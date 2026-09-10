@@ -44,7 +44,7 @@ export default function DeleteRecipeButton({
         ref={triggerRef}
         type="button"
         onClick={() => setConfirming(true)}
-        className="text-muted hover:text-accent"
+        className="text-muted hover:text-danger"
       >
         Delete
       </button>
@@ -60,7 +60,7 @@ export default function DeleteRecipeButton({
         aria-label={`Yes, delete “${title}”`}
         onClick={remove}
         disabled={busy}
-        className="rounded-lg bg-accent px-3 py-1 text-white disabled:opacity-50"
+        className="rounded-lg bg-danger px-3 py-1 text-white hover:opacity-90 disabled:opacity-50"
       >
         {busy ? "Deleting…" : "Yes, delete"}
       </button>

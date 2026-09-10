@@ -305,7 +305,7 @@ export default function RecipeForm({ recipe }: Props) {
                     : rows.filter((_, i) => i !== index)
                 )
               }
-              className="px-2 text-muted hover:text-accent"
+              className="px-2 text-muted hover:text-danger"
             >
               ✕
             </button>
@@ -346,7 +346,7 @@ export default function RecipeForm({ recipe }: Props) {
                   all.length === 1 ? [""] : all.filter((_, i) => i !== index)
                 )
               }
-              className="px-2 text-muted hover:text-accent"
+              className="px-2 text-muted hover:text-danger"
             >
               ✕
             </button>
@@ -388,7 +388,7 @@ export default function RecipeForm({ recipe }: Props) {
             <button
               type="button"
               onClick={() => setImageUrl("")}
-              className="text-sm text-muted hover:text-accent"
+              className="text-sm text-muted hover:text-danger"
             >
               Remove
             </button>

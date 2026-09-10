@@ -27,7 +27,33 @@ export default function PeoplePanel({
 }) {
   const [people, setPeople] = useState(initialPeople);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  async function remove(person: Person) {
+    setBusyId(person.id);
+    setMessage(null);
+
+    const response = await fetch(`/api/users/${person.id}`, { method: "DELETE" });
+    if (response.ok) {
+      const body = (await response.json()) as { recipesReassigned: number };
+      setPeople((list) => list.filter((p) => p.id !== person.id));
+      setMessage(
+        body.recipesReassigned > 0
+          ? `${person.name} removed; their ${body.recipesReassigned} recipe${
+              body.recipesReassigned === 1 ? " is" : "s are"
+            } now listed as added by you.`
+          : `${person.name} removed.`
+      );
+    } else {
+      const body = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+      setMessage(body?.error ?? "Couldn't remove that account.");
+    }
+    setRemovingId(null);
+    setBusyId(null);
+  }
 
   async function toggle(person: Person, permission: Permission, granted: boolean) {
     const permissions = granted
@@ -65,7 +91,8 @@ export default function PeoplePanel({
       <section className="space-y-4">
         <p className="text-sm text-muted">
           Who may do what. Everyone can read and rate recipes; the rest is granted
-          here and applies straight away, API tokens and MCP included.
+          here and applies straight away, API tokens and MCP included. Removing
+          someone keeps their recipes, listed as added by you from then on.
         </p>
 
         <div className="overflow-x-auto rounded-xl border border-line bg-card">
@@ -85,6 +112,9 @@ export default function PeoplePanel({
                     {PERMISSION_LABELS[permission]}
                   </th>
                 ))}
+                <th scope="col" className="px-3 py-3">
+                  <span className="sr-only">Remove</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -113,6 +143,40 @@ export default function PeoplePanel({
                       />
                     </td>
                   ))}
+                  <td className="px-3 py-3 text-right text-xs whitespace-nowrap">
+                    {person.id === currentUserId ? null : removingId ===
+                      person.id ? (
+                      // Two-step instead of a browser confirm() dialog.
+                      <span className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          aria-label={`Yes, remove ${person.name}`}
+                          onClick={() => remove(person)}
+                          disabled={busyId === person.id}
+                          className="rounded-lg bg-danger px-2.5 py-1 text-white hover:opacity-90 disabled:opacity-50"
+                        >
+                          {busyId === person.id ? "Removing…" : "Yes, remove"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRemovingId(null)}
+                          className="text-muted hover:text-ink"
+                        >
+                          Cancel
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={`Remove ${person.name}`}
+                        onClick={() => setRemovingId(person.id)}
+                        disabled={busyId !== null}
+                        className="text-muted hover:text-danger disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

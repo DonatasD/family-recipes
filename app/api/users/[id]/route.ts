@@ -66,3 +66,29 @@ export async function PATCH(request: Request, { params }: Params) {
     permissions: normalizePermissions(updated.permissions),
   });
 }
+
+/**
+ * DELETE /api/users/:id — remove an account. Needs users:manage.
+ * Their recipes are handed to the caller rather than cascade-deleted: the
+ * collection is shared, so a person leaving shouldn't take dishes with it.
+ * Ratings and the API token go with the account.
+ */
+export async function DELETE(request: Request, { params }: Params) {
+  const user = await getApiUser(request);
+  if (!user) return unauthorized();
+  if (!can(user, "users:manage")) return forbidden("users:manage");
+
+  const { id } = await params;
+  if (id === user.id) {
+    return jsonError(409, "You can't remove your own account; ask someone else who manages people");
+  }
+
+  const target = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+  if (!target) return notFound("User");
+
+  const [reassigned] = await prisma.$transaction([
+    prisma.recipe.updateMany({ where: { authorId: id }, data: { authorId: user.id } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
+  return NextResponse.json({ deleted: true, id, recipesReassigned: reassigned.count });
+}

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
-export default function SignOutButton() {
+export default function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -20,11 +20,9 @@ export default function SignOutButton() {
       type="button"
       onClick={signOut}
       disabled={pending}
-      // ink at 80%, not muted: muted misses AA on the header's soft green
-      // text-left and py-2: it sits in the stacked mobile menu alongside the links
-      className="py-2 text-left text-ink/80 hover:text-accent disabled:opacity-50 md:py-0"
+      className={`disabled:opacity-50 ${className ?? ""}`}
     >
-      Sign out
+      {pending ? "Signing out…" : "Sign out"}
     </button>
   );
 }

@@ -450,7 +450,7 @@ export default function GroceryList({
                         <button
                           type="button"
                           aria-label={`Remove ${recipe.title} from the list`}
-                          className="ml-auto text-xs text-muted hover:text-accent"
+                          className="ml-auto text-xs text-muted hover:text-danger"
                           onClick={() =>
                             void apply(
                               request(`/api/grocery/recipes/${recipe.slug}`, "DELETE")
@@ -594,7 +594,7 @@ export default function GroceryList({
             <button
               type="button"
               onClick={() => void apply(request("/api/grocery", "DELETE"))}
-              className="text-muted hover:text-accent"
+              className="text-muted hover:text-danger"
             >
               Clear list
             </button>
@@ -798,7 +798,7 @@ function Row({
           type="button"
           aria-label={`Remove ${item}`}
           onClick={onRemove}
-          className="text-muted hover:text-accent"
+          className="text-muted hover:text-danger"
         >
           ×
         </button>

@@ -26,6 +26,9 @@
   --color-card: #fdfcf2;
   --color-accent: #66761a;
   --color-accent-soft: #e9edc9;
+  /* Destructive actions only (delete, remove, clear). Brick rather than pure
+     red to sit with the olive; 5.2:1 on paper, 5.7:1 under white text. */
+  --color-danger: #b3402e;
 
   /* Fallback stacks matter: next/font vars are absent in error pages. */
   --font-display: var(--font-baloo), ui-rounded, "Comic Sans MS", ui-serif,

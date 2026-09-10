@@ -87,7 +87,7 @@ export default function ApiTokenPanel({
             aria-describedby="regenerate-warning"
             onClick={regenerate}
             disabled={regenerating}
-            className="rounded-lg bg-accent px-3 py-1.5 text-white disabled:opacity-50"
+            className="rounded-lg bg-danger px-3 py-1.5 text-white hover:opacity-90 disabled:opacity-50"
           >
             {regenerating ? "Working…" : "Regenerate"}
           </button>
@@ -104,7 +104,7 @@ export default function ApiTokenPanel({
           ref={triggerRef}
           type="button"
           onClick={() => setConfirming(true)}
-          className="text-sm text-muted hover:text-accent"
+          className="text-sm text-muted hover:text-danger"
         >
           Regenerate token
         </button>
